@@ -13,12 +13,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Reconstruct corrected source
+      - name: Download corrected source archive
         shell: bash
         run: |
           mkdir -p work
-          cat source/CloudBridge.zip.b64.part* > /tmp/cloudbridge.b64
-          base64 -d /tmp/cloudbridge.b64 > /tmp/CloudBridge.zip
+          curl -L --fail --retry 3 \
+            "https://drive.google.com/uc?export=download&id=1p6rt4Nni_A8Vdaxsw_VceyDW-qMKesfs" \
+            -o /tmp/CloudBridge.zip
           unzip -q /tmp/CloudBridge.zip -d work
 
       - name: Set up JDK 17
@@ -46,6 +47,10 @@ jobs:
       - name: Build debug APK
         working-directory: work
         run: gradle assembleDebug --stacktrace
+
+      - name: Print signing report
+        working-directory: work
+        run: gradle signingReport --console=plain
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
